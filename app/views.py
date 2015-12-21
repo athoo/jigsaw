@@ -5,6 +5,7 @@ from models import User
 from flask import Flask
 from flask import request, url_for, jsonify, g
 from flask.ext.httpauth import HTTPBasicAuth
+from itsdangerous import URLSafeTimedSerializer
 import re
 
 auth = HTTPBasicAuth()
@@ -15,15 +16,48 @@ def filterUserModel(user):
         'email': user.email,
         'name': user.name,
         'age': user.age,
+        #'validate': user.validate,
         'occupation': user.occupation,
         'education': user.education,
         'location': user.location
     }
 
+def generate_validate_email(email):
+    s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+    return s.dumps(email, salt=app.config['SECURITY_PASSWORD_SALT'])
+
+def validate_token(token, expiration=3600): # email validate expiration 1 hours
+    s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+    try:
+        email = s.loads(
+            token,
+            salt=app.config['SECURITY_PASSWORD_SALT'],
+            max_age=expiration
+        )
+    except:
+        return False
+    return email
+
 
 @app.errorhandler(404)
 def page_not_found(e):
     return jsonify({'message': '404 not found'}), 404
+
+@app.route('/validate/<token>')
+def validate_email(token):
+    try:
+        email = validate_token(token)
+    except:
+        return 'The confirmation link is invalid or has expired.', 200
+
+    user = User.objects(email=email).first()
+    if user is not None:
+        if user.validate:
+            return 'Account already confirmed. Please login.', 200
+        else:
+            user.update(set__validate=True)
+            return 'You have confirmed your account. Thanks!', 200
+    return 'The confirmation link is invalid or has expired.', 200
 
 
 @app.route('/api/v1/user/create', methods=['POST'])
@@ -39,7 +73,7 @@ def reg_user():
     user = User(email=email, password=pwd)
     # password to hash
     user.saveNewsUser()
-    return jsonify({'email': user.email}), 201, {'Location': url_for('get_user', id = user.id, _external = True)}
+    return jsonify({'email': user.email}), 201, {'Location': url_for('get_user', uid = user.uid, _external = True)}
 
 
 
@@ -93,7 +127,7 @@ def user_update(uid):
         return jsonify({'Success': 0, 'message': 'not user!'}), 200
     # filter safe fields
     _ref = {}
-    for key in ['uid','email','name','age','occupation','education','location']:
+    for key in ['name','age','occupation','education','location']:
         if request.json.get(key) is not None:
             _ref[key] = request.json.get(key)
 
