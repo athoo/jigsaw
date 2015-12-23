@@ -1,7 +1,7 @@
 # main
-MONGODB_SETTINGS = {'DB': 'jigsaw'}
-SECRET_KEY = 'wechat:Vdinglei'
-SECURITY_PASSWORD_SALT = 'lei'
+MONGODB_SETTINGS = {'DB': ''}
+SECRET_KEY = ''
+SECURITY_PASSWORD_SALT = ''
 
 # mail settings
 MAIL_SERVER = 'smtp.qq.com'
@@ -9,7 +9,7 @@ MAIL_PORT = 465
 MAIL_USE_TLS = False
 MAIL_USE_SSL = True
 
-# gmail authentication
+# mail authentication
 MAIL_USERNAME = '147947668@qq.com'
 MAIL_PASSWORD = ''
 
