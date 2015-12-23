@@ -1,3 +1,4 @@
 # 忽略提交文件
 jigsaw-virtu/
 *.pyc
+.DS_Store

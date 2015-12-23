@@ -2,6 +2,7 @@
 
 from app import app
 from models import User
+from mail import send_email
 from flask import Flask
 from flask import request, url_for, jsonify, g
 from flask.ext.httpauth import HTTPBasicAuth
@@ -16,7 +17,7 @@ def filterUserModel(user):
         'email': user.email,
         'name': user.name,
         'age': user.age,
-        #'validate': user.validate,
+        'valid': user.valid,
         'occupation': user.occupation,
         'education': user.education,
         'location': user.location
@@ -43,6 +44,19 @@ def validate_token(token, expiration=3600): # email validate expiration 1 hours
 def page_not_found(e):
     return jsonify({'message': '404 not found'}), 404
 
+@app.route('/api/v1/sendmail', methods=['POST'])
+def sendmail(email=None):
+    email = email or request.json.get('email')
+    # email = email or request.args.get('email')
+    if email is not None:
+        token = generate_validate_email(email)
+        link = 'http://10.86.166.55:8080/validate/'+token
+        send_email(email, 'jigsaw validate email', '<div><a href="'+link+'">'+link+'</a>链接有效时间为1小时</div>')
+        return jsonify({'Success': 1}), 200
+
+    return jsonify({'Success': 0}), 200
+
+
 @app.route('/validate/<token>')
 def validate_email(token):
     try:
@@ -52,10 +66,10 @@ def validate_email(token):
 
     user = User.objects(email=email).first()
     if user is not None:
-        if user.validate:
+        if user.valid == 1:
             return 'Account already confirmed. Please login.', 200
         else:
-            user.update(set__validate=True)
+            user.update(set__valid=1)
             return 'You have confirmed your account. Thanks!', 200
     return 'The confirmation link is invalid or has expired.', 200
 
@@ -73,6 +87,7 @@ def reg_user():
     user = User(email=email, password=pwd)
     # password to hash
     user.saveNewsUser()
+    sendmail(email)
     return jsonify({'email': user.email}), 201, {'Location': url_for('get_user', uid = user.uid, _external = True)}
 
 

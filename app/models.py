@@ -14,7 +14,7 @@ class User(db.Document):
     occupation = db.StringField()
     education = db.StringField()
     location = db.StringField()
-    #validate = db.BooleanField(default=False)
+    valid = db.IntField(default=0, min_value=0, max_value=1)
     time = db.DateTimeField(default = datetime.datetime.now())
     password = db.StringField(required=True)
 
