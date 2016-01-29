@@ -1,2 +1,2 @@
 #jigsaw
-###Python-Auth2.0 + Restfull + Angularjs + React-Native
+###Python-Auth2.0 + Restfull
